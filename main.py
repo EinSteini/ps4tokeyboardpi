@@ -15,6 +15,19 @@ class MyController(Controller):
 
     def on_L3_up(self):
         print("W")
-        write_report(NULL_CHAR*2+chr(17)+NULL_CHAR*5)
+        write_report(NULL_CHAR*2+chr(26)+NULL_CHAR*5)
+
+    def on_L3_down(self):
+        print("S")
+        write_report(NULL_CHAR*2+chr(22)+NULL_CHAR*5)
+
+    def on_L3_left(self):
+        print("A")
+        write_report(NULL_CHAR*2+chr(4)+NULL_CHAR*5)
+
+    def on_L3_right(self):
+        print("D")
+        write_report(NULL_CHAR*2+chr(7)+NULL_CHAR*5)
 
 controller = MyController(interface="/dev/input/js0", connecting_using_ds4drv=False)
+controller.listen()
