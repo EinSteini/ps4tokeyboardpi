@@ -1,4 +1,5 @@
-from controller import Controller
+
+from pyPS4Controller.controller import Controller
 
 
 NULL_CHAR = chr(0)
