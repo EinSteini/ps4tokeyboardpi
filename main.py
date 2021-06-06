@@ -28,6 +28,14 @@ class MyController(Controller):
     def on_L3_right(self, a):
         print("D")
         write_report(NULL_CHAR*2+chr(7)+NULL_CHAR*5)
+    
+    def on_L3_x_at_rest(self):
+        print("Stop")
+        write_report(NULL_CHAR*8)
+
+    def on_L3_y_at_rest(self):
+        print("Stop")
+        write_report(NULL_CHAR*8)
 
 controller = MyController(interface="/dev/input/js0", connecting_using_ds4drv=False)
 controller.listen(timeout=60)
