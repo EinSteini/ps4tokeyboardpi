@@ -12,7 +12,7 @@ def write_report(report):
 
 class InputStream():
 
-    currentInputs = [False for i in range(5)]
+    currentInputs = [False for i in range(6)]
 
     def __init__(self):
         print("init stream")
@@ -25,11 +25,9 @@ class InputStream():
                 inputs.append(i)
         
         return inputs
-        
-        
+
     def input(self, input):
         if input == "FW":
-            #print("FW")
             self.currentInputs[0] = self.currentInputs[0] != True
         elif input == "L":
            # print("L")
@@ -43,6 +41,8 @@ class InputStream():
         elif input == "J":
             #print("J")
             self.currentInputs[4] = self.currentInputs[4] != True
+        elif input == "IR":
+            self.currentInputs[-1] = self.currentInputs[-1] != True
             
 
 class MyController(Controller):
@@ -58,16 +58,20 @@ class MyController(Controller):
         return self.input.getInputs()
 
     def on_L2_press(self, a):
-        self.input.input("FW")
+        if 0 not in self.input.getInputs():
+            self.input.input("FW")
 
     def on_L2_release(self):
-        self.input.input("FW")
+        if 0 in self.input.getInputs():
+            self.input.input("FW")
 
     def on_R2_press(self, a):
-        self.input.input("B")
+        if 2 not in self.input.getInputs():
+            self.input.input("B")
 
     def on_R2_release(self):
-        self.input.input("B")
+        if 2 in self.input.getInputs():
+            self.input.input("B")
 
     def on_L1_press(self):
         self.input.input("L")
@@ -87,6 +91,12 @@ class MyController(Controller):
     def on_x_release(self):
         self.input.input("J")
 
+    def on_playstation_button_press(self):
+        self.input.input("IN")
+
+    def on_playstation_button_release(self):
+        self.input.input("IN")
+
 def outputThread(name):
 
     logging.info("Thread %s: starting", name)
@@ -95,28 +105,32 @@ def outputThread(name):
 
     while(True):
 
-            time.sleep(0.5)
+            #time.sleep(0.05)
 
             inputs = stream.getInputs()
             print(inputs)
                     
+            if len(inputs) == 0:
+                print("interrupt")
+                write_report(NULL_CHAR*8)
+
             for i in inputs:
                 if i == 0:
-                    print("W")
+                    #print("W")
                     write_report(NULL_CHAR*2+chr(26)+NULL_CHAR*5)
-                elif i == 1:
-                    print("A")
+                if i == 1:
+                    #print("A")
                     write_report(NULL_CHAR*2+chr(4)+NULL_CHAR*5)
-                elif i == 2:
-                    print("S")
+                if i == 2:
+                    #print("S")
                     write_report(NULL_CHAR*2+chr(22)+NULL_CHAR*5)
-                elif i == 3:
-                    print("D")
+                if i == 3:
+                    #print("D")
                     write_report(NULL_CHAR*2+chr(7)+NULL_CHAR*5)
-                elif i == 4:
-                    print("JUMP")
+                if i == 4:
+                    #print("JUMP")
                     write_report(NULL_CHAR*2+chr(44)+NULL_CHAR*5)
-                elif i is None:
+                else:
                     write_report(NULL_CHAR*8)
 
 
