@@ -12,7 +12,8 @@ def write_kb(report):
 
 class InputStream():
 
-    currentInputs = [False for i in range(6)]
+    currentInputs = [False for i in range(8)]
+    # [FW, L, B, R, J, C, LC, RC]
 
     def __init__(self):
         print("init stream")
@@ -41,10 +42,9 @@ class InputStream():
         elif input == "J":
             #print("J")
             self.currentInputs[4] = self.currentInputs[4] != True
-        elif input == "IR":
-            self.currentInputs[-1] = self.currentInputs[-1] != True
+        elif input == "C":
+            self.currentInputs[5] = self.currentInputs[5] != True
             
-
 class MyController(Controller):
 
     input = InputStream()
@@ -90,27 +90,38 @@ class MyController(Controller):
     def on_x_release(self):
         self.input.input("J")
 
+    def on_down_arrow_press(self):
+        self.input.input("C")
+
+    def on_down_arrow_release(self):
+        self.input.input("C")
+
 
 def outputThread(name):
     logging.info("Thread %s: starting", name)
 
     stream = InputStream()
+    sprint = True
 
     if(True):
         while(True):
             time.sleep(0.05)
-            print("whiletrue")
             inputs = stream.getInputs()
             print(inputs)
                     
             if len(inputs) == 0:
-                print("interrupt")
+                #print("interrupt")
                 write_kb(NULL_CHAR*8)
             elif len(inputs) > 6:
                 print("too many inputs")
                 inputs = inputs[0::5]
 
             pressedKeys = NULL_CHAR*2
+            if 0 in inputs:
+                pressedKeys = chr(1) + NULL_CHAR
+            if 5 in inputs:
+                pressedKeys = chr(2) + NULL_CHAR
+
             iterator = 0
 
             for i in inputs:
@@ -134,7 +145,10 @@ def outputThread(name):
                     pressedKeys += chr(44)
                 else:
                     iterator -= 1
-            
+
+            print(pressedKeys)
+            pressedKeys.replace("REPLACE", NULL_CHAR)
+            print(pressedKeys)
             pressedKeys += NULL_CHAR*(6-iterator)
 
             write_kb(pressedKeys)
