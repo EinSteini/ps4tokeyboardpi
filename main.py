@@ -5,7 +5,7 @@ import threading
 
 NULL_CHAR = chr(0)
 
-def write_report(report):
+def write_kb(report):
     with open('/dev/hidg0', 'rb+') as fd:
         fd.write(report.encode())
 
@@ -53,7 +53,6 @@ class MyController(Controller):
         print("init con")
         Controller.__init__(self, **kwargs)
         
-
     def getInputs(self):
         return self.input.getInputs()
 
@@ -91,50 +90,57 @@ class MyController(Controller):
     def on_x_release(self):
         self.input.input("J")
 
-    def on_playstation_button_press(self):
-        self.input.input("IN")
-
-    def on_playstation_button_release(self):
-        self.input.input("IN")
 
 def outputThread(name):
-
     logging.info("Thread %s: starting", name)
 
     stream = InputStream()
 
-    while(True):
-
-            #time.sleep(0.05)
-
+    if(True):
+        while(True):
+            time.sleep(0.05)
+            print("whiletrue")
             inputs = stream.getInputs()
             print(inputs)
                     
             if len(inputs) == 0:
                 print("interrupt")
-                write_report(NULL_CHAR*8)
+                write_kb(NULL_CHAR*8)
+            elif len(inputs) > 6:
+                print("too many inputs")
+                inputs = inputs[0::5]
+
+            pressedKeys = NULL_CHAR*2
+            iterator = 0
 
             for i in inputs:
+                if iterator > 5:
+                    break
+                iterator += 1
                 if i == 0:
-                    #print("W")
-                    write_report(NULL_CHAR*2+chr(26)+NULL_CHAR*5)
-                if i == 1:
-                    #print("A")
-                    write_report(NULL_CHAR*2+chr(4)+NULL_CHAR*5)
-                if i == 2:
-                    #print("S")
-                    write_report(NULL_CHAR*2+chr(22)+NULL_CHAR*5)
-                if i == 3:
-                    #print("D")
-                    write_report(NULL_CHAR*2+chr(7)+NULL_CHAR*5)
-                if i == 4:
-                    #print("JUMP")
-                    write_report(NULL_CHAR*2+chr(44)+NULL_CHAR*5)
+                    print("W")
+                    pressedKeys += chr(26)
+                elif i == 1:
+                    print("A")
+                    pressedKeys += chr(4)
+                elif i == 2:
+                    print("S")
+                    pressedKeys += chr(22)
+                elif i == 3:
+                    print("D")
+                    pressedKeys += chr(7)
+                elif i == 4:
+                    print("JUMP")
+                    pressedKeys += chr(44)
                 else:
-                    write_report(NULL_CHAR*8)
+                    iterator -= 1
+            
+            pressedKeys += NULL_CHAR*(6-iterator)
 
+            write_kb(pressedKeys)
 
 if __name__ == "__main__":
+    time.sleep(1)
     format = "%(asctime)s: %(message)s"
     
     logging.basicConfig(format=format, level=logging.INFO, datefmt="%H:%M:%S")
