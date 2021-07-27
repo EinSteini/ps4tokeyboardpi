@@ -9,11 +9,15 @@ def write_kb(report):
     with open('/dev/hidg0', 'rb+') as fd:
         fd.write(report.encode())
 
+def write_ms(report):
+    with open('/dev/hidg1', 'rb+') as fd:
+        fd.write(report.encode())
+
 
 class InputStream():
 
     currentInputs = [False for i in range(8)]
-    # [FW, L, B, R, J, C, LC, RC]
+    # [FW, L, B, R, J, C]
 
     def __init__(self):
         print("init stream")
