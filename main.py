@@ -9,13 +9,14 @@ def write_kb(report):
 
 def write_ms(report):
     with open('/dev/hidg1', 'rb+') as fd:
+        #print(f"mouse {report}")
         fd.write(report)
 
 
 class InputStream():
 
     currentInputs = [False for i in range(8)]
-    # [FW, L, B, R, J, C]
+    # [FW, L, B, R, J, C, LHB, RHB]
 
     def __init__(self):
         print("init stream")
@@ -46,21 +47,36 @@ class InputStream():
             self.currentInputs[4] = self.currentInputs[4] != True
         elif input == "C":
             self.currentInputs[5] = self.currentInputs[5] != True
+        elif input == "LHB":
+            self.currentInputs[6] = self.currentInputs[6] != True
+        elif input == "RHB":
+            self.currentInputs[7] = self.currentInputs[7] != True
+        
             
 class MouseInput:
     
     #sensitivity = 1
-
+    x = 0
+    y = 0
+    
     def __init__(self, sensitivity = 1):
         self.sensitivity = sensitivity if sensitivity <= 1 else 1 
     
-    def input(self, x, y, btn = -1):
-        write_ms(bytes([int(pow(2, btn)) + self.convertCoordinates(x) + self.convertCoordinates(y)]))
+    def input(self, x, y, btn = 0):
+        self.x = x if x != 0 else self.x
+        self.y = y if y != 0 else self.y
+        btn = 0 if not btn else btn
+        write_ms(bytes([btn, self.convertCoordinates(self.x), self.convertCoordinates(self.y)]))
+
+    def reset(self):
         write_ms(bytes(3))
 
     def convertCoordinates(self, coord):
-        print(int((coord/256)*self.sensitivity)+127)
-        return int((coord/256)*self.sensitivity)+127
+        result = int((coord/256)*self.sensitivity)
+        if result < 0:
+            result += 256
+
+        return result
 
 
 
@@ -117,29 +133,58 @@ class MyController(Controller):
     def on_down_arrow_release(self):
         self.input.input("C")
 
+    def on_share_press(self):
+        self.input.input("LHB")
+
+    def on_share_release(self):
+        self.input.input("LHB")
+
+    def on_options_press(self):
+        self.input.input("RHB")
+
+    def on_options_release(self):
+        self.input.input("RHB")
+
     #Mouse
 
-    mouse = MouseInput(0.1)
+    mouse = MouseInput(0.4)
 
-    def on_R3_up(self, a):
+    def on_L3_up(self, a):
         self.mouse.input(0,a)
 
-    def on_R3_down(self, a):
+    def on_L3_down(self, a):
         self.mouse.input(0,a)
 
-    def on_R3_left(self, a):
+    def on_L3_left(self, a):
         self.mouse.input(a,0)
     
-    def on_R3_right(self, a):
+    def on_L3_right(self, a):
         self.mouse.input(a,0)
-        
+    
+    def on_L3_x_at_rest(self):
+        self.mouse.reset()
+
+    def on_L3_y_at_rest(self):
+        self.mouse.reset()
+
+    def on_triangle_press(self):
+        self.mouse.input(0,0,1)
+    
+    def on_triangle_release(self):
+        self.mouse.input(0,0,0)
+
+    def on_square_press(self):
+        self.mouse.input(0,0,2)
+    
+    def on_square_release(self):
+        self.mouse.input(0,0,0)    
 
 
 def outputThread(name):
     logging.info("Thread %s: starting", name)
 
     stream = InputStream()
-    sprint = True
+    currentHotbarPosition = 1
 
     if(True):
         while(True):
@@ -181,11 +226,17 @@ def outputThread(name):
                 elif i == 4:
                     print("JUMP")
                     pressedKeys += bytes([44])
+                elif i == 6:
+                    currentHotbarPosition = currentHotbarPosition - 1 if currentHotbarPosition > 1 else currentHotbarPosition
+                    pressedKeys += bytes([29 + currentHotbarPosition])
+                elif i == 7:
+                    currentHotbarPosition = currentHotbarPosition + 1 if currentHotbarPosition < 9 else currentHotbarPosition
+                    pressedKeys += bytes([29 + currentHotbarPosition])
                 else:
                     iterator -= 1
 
-            print(pressedKeys)
             pressedKeys += bytes(6-iterator)
+            print(pressedKeys)
 
             write_kb(pressedKeys)
 
