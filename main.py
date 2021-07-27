@@ -3,15 +3,13 @@ import time
 import logging
 import threading
 
-NULL_CHAR = chr(0)
-
 def write_kb(report):
     with open('/dev/hidg0', 'rb+') as fd:
-        fd.write(report.encode())
+        fd.write(report)
 
 def write_ms(report):
     with open('/dev/hidg1', 'rb+') as fd:
-        fd.write(report.encode())
+        fd.write(report)
 
 
 class InputStream():
@@ -49,9 +47,28 @@ class InputStream():
         elif input == "C":
             self.currentInputs[5] = self.currentInputs[5] != True
             
+class MouseInput:
+    
+    #sensitivity = 1
+
+    def __init__(self, sensitivity = 1):
+        self.sensitivity = sensitivity if sensitivity <= 1 else 1 
+    
+    def input(self, x, y, btn = -1):
+        write_ms(bytes([int(pow(2, btn)) + self.convertCoordinates(x) + self.convertCoordinates(y)]))
+        write_ms(bytes(3))
+
+    def convertCoordinates(self, coord):
+        print(int((coord/256)*self.sensitivity)+127)
+        return int((coord/256)*self.sensitivity)+127
+
+
+
 class MyController(Controller):
 
     input = InputStream()
+
+    #Keyboard
 
     def __init__(self, **kwargs):
         print("init con")
@@ -100,6 +117,23 @@ class MyController(Controller):
     def on_down_arrow_release(self):
         self.input.input("C")
 
+    #Mouse
+
+    mouse = MouseInput(0.1)
+
+    def on_R3_up(self, a):
+        self.mouse.input(0,a)
+
+    def on_R3_down(self, a):
+        self.mouse.input(0,a)
+
+    def on_R3_left(self, a):
+        self.mouse.input(a,0)
+    
+    def on_R3_right(self, a):
+        self.mouse.input(a,0)
+        
+
 
 def outputThread(name):
     logging.info("Thread %s: starting", name)
@@ -115,16 +149,16 @@ def outputThread(name):
                     
             if len(inputs) == 0:
                 #print("interrupt")
-                write_kb(NULL_CHAR*8)
+                write_kb(bytes(8))
             elif len(inputs) > 6:
                 print("too many inputs")
                 inputs = inputs[0::5]
 
-            pressedKeys = NULL_CHAR*2
+            pressedKeys = bytes(2)
             if 0 in inputs:
-                pressedKeys = chr(1) + NULL_CHAR
+                pressedKeys = bytes([1,0])
             if 5 in inputs:
-                pressedKeys = chr(2) + NULL_CHAR
+                pressedKeys = bytes([2,0])
 
             iterator = 0
 
@@ -134,26 +168,24 @@ def outputThread(name):
                 iterator += 1
                 if i == 0:
                     print("W")
-                    pressedKeys += chr(26)
+                    pressedKeys += bytes([26])
                 elif i == 1:
                     print("A")
-                    pressedKeys += chr(4)
+                    pressedKeys += bytes([4])
                 elif i == 2:
                     print("S")
-                    pressedKeys += chr(22)
+                    pressedKeys += bytes([22])
                 elif i == 3:
                     print("D")
-                    pressedKeys += chr(7)
+                    pressedKeys += bytes([7])
                 elif i == 4:
                     print("JUMP")
-                    pressedKeys += chr(44)
+                    pressedKeys += bytes([44])
                 else:
                     iterator -= 1
 
             print(pressedKeys)
-            pressedKeys.replace("REPLACE", NULL_CHAR)
-            print(pressedKeys)
-            pressedKeys += NULL_CHAR*(6-iterator)
+            pressedKeys += bytes(6-iterator)
 
             write_kb(pressedKeys)
 

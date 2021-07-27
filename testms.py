@@ -1,9 +1,7 @@
-NULL_CHAR = chr(0)
-
 def ms_write(report):
     with open("/dev/hidg1", "rb+") as fd:
-        print(fd.write(report.encode()))
+        print(fd.write(report))
 
-ms_write(NULL_CHAR+chr(100)+chr(100))
-ms_write(chr(2)+NULL_CHAR*2)
-ms_write(NULL_CHAR*3)
+ms_write(bytes([0,100,10]))
+ms_write(bytes([1])+bytes(2))
+ms_write(bytes(3))
